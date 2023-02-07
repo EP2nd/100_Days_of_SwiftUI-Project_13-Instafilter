@@ -5,15 +5,20 @@
 //  Created by Edwin Przeźwiecki Jr. on 06/02/2023.
 //
 
-import Foundation
 import PhotosUI
 import SwiftUI
 
 struct ImagePicker: UIViewControllerRepresentable {
     
+    @Binding var image: UIImage?
+    
     class Coordinator: NSObject, PHPickerViewControllerDelegate {
         
         var parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
         
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             /// Tell the picker to go away:
@@ -29,16 +34,10 @@ struct ImagePicker: UIViewControllerRepresentable {
                 }
             }
         }
-        
-        init(_ parent: ImagePicker) {
-            self.parent = parent
-        }
     }
     
-    @Binding var image: UIImage?
-    
     func makeUIViewController(context: Context) -> PHPickerViewController {
-        var config = PHPickerConfiguration(photoLibrary: PHPhotoLibrary.shared())
+        var config = PHPickerConfiguration()
         config.filter = .images
         
         let picker = PHPickerViewController(configuration: config)
