@@ -12,10 +12,11 @@ import SwiftUI
 struct ContentView: View {
     
     @State private var image: Image?
+    
     @State private var filterIntensity = 0.5
     /// Challenge 2:
-    @State private var filterRadius = 0.5
-    @State private var filterScale = 0.5
+    @State private var filterRadius = 5.0
+    @State private var filterScale = 5.0
     
     @State private var showingImagePicker = false
     @State private var inputImage: UIImage?
@@ -26,6 +27,8 @@ struct ContentView: View {
     @State private var showingFilterSheet = false
     
     @State private var processedImage: UIImage?
+    
+    @State private var showingSaveError = false
     
     var body: some View {
         NavigationView {
@@ -60,7 +63,7 @@ struct ContentView: View {
                 /// Challenge 2:
                 HStack {
                     Text("Radius")
-                    Slider(value: $filterRadius)
+                    Slider(value: $filterRadius, in: 0...200)
                         .onChange(of: filterRadius) { _ in
                             applyProcessing()
                         }
@@ -70,7 +73,7 @@ struct ContentView: View {
                 
                 HStack {
                     Text("Scale")
-                    Slider(value: $filterScale)
+                    Slider(value: $filterScale, in: 0...10)
                         .onChange(of: filterScale) { _ in
                             applyProcessing()
                         }
@@ -100,21 +103,26 @@ struct ContentView: View {
                 
                 /// Challenge 3:
                 Group {
-                    Button("Bokeh Blur") { setFilter(CIFilter.bokehBlur()) }
+                    Button("Bloom") { setFilter(CIFilter.bloom()) }
                     Button("Crystallize") { setFilter(CIFilter.crystallize()) }
                     Button("Edges") { setFilter(CIFilter.edges()) }
                     Button("Gaussian Blur") { setFilter(CIFilter.gaussianBlur()) }
-                    Button("Glass Distortion") { setFilter(CIFilter.glassDistortion()) }
+                    Button("Pixellate") { setFilter(CIFilter.pixellate()) }
                 }
                 
                 Group {
-                    Button("Pixellate") { setFilter(CIFilter.pixellate()) }
+                    Button("Pointillize") { setFilter(CIFilter.pointillize()) }
                     Button("Sepia Tone") { setFilter(CIFilter.sepiaTone()) }
-                    Button("Twirl Distortion") { setFilter(CIFilter.twirlDistortion()) }
+                    Button("Glass Lozenge") { setFilter(CIFilter.glassLozenge()) }
                     Button("Unsharp Mask") { setFilter(CIFilter.unsharpMask()) }
                     Button("Vignette") { setFilter(CIFilter.vignette()) }
                     Button("Cancel", role: .cancel) { }
                 }
+            }
+            .alert("Error", isPresented: $showingSaveError) {
+                Button("OK") { }
+            } message: {
+                Text("There was an error saving your image. Please make sure you have allowed this app to save photos.")
             }
         }
     }
@@ -137,8 +145,8 @@ struct ContentView: View {
         
         /// Challenge 2:
         if inputKeys.contains(kCIInputIntensityKey) { currentFilter.setValue(filterIntensity, forKey: kCIInputIntensityKey) }
-        if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(filterRadius * 200, forKey: kCIInputRadiusKey) }
-        if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(filterScale * 10, forKey: kCIInputScaleKey) }
+        if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(filterRadius, forKey: kCIInputRadiusKey) }
+        if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(filterScale, forKey: kCIInputScaleKey) }
         
         guard let outputImage = currentFilter.outputImage else { return }
         
@@ -159,7 +167,8 @@ struct ContentView: View {
         }
         
         imageSaver.errorHandler = {
-            print("Oops: \($0.localizedDescription)")
+            print("Error: \($0.localizedDescription)")
+            showingSaveError = true
         }
         
         imageSaver.writeToPhotoAlbum(image: processedImage)
